@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+<div id="container" style="min-width:400px;height:400px;"></div>
+<script src="https://img.hcharts.cn/highcharts/highcharts.js"></script>
+<script
+        src="http://code.jquery.com/jquery-latest.js"></script>
+<script>
+    var chart = null; // 定义全局变量
+    var lastdatatime = null;
+    var initdata = [[123, 234], [234, 345], [345, 456]];
+    var linecolor=null;
+    //  $.ajaxSettings.async=false ;
+    $.getJSON('./initdata.php', function (data) {
+        callBack(data);
+    });
+    function callBack(res) {
+        console.log(res);
+        chart = new Highcharts.Chart({
+            chart: {
+                renderTo: 'container',
+                type: 'spline',
+                events: {
+                    load: requestData // 图表加载完毕后执行的回调函数
+                }
+            },
+
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: 'Live random data'
+            },
+            xAxis: {
+                type: 'category',
+                tickInterval: 5
+            },
+            yAxis: {
+                minPadding: 0.2,
+                maxPadding: 0.2,
+                title: {
+                    text: 'Value',
+                    margin: 80
+                }
+            },
+
+            series: [{
+                name: '随机数据',
+                data: res,
+                color:linecolor
+            }]
+        })
+    }
+    ;
+
+    function requestData() {
+        $.ajax({
+            url: './ajaxdata.php',
+            success: function (point) {
+                //point=JSON.parse(point);
+                var series = chart.series[0],
+                    shift = series.data.length > 200; // 当数据点数量超过 20 个，则指定删除第一个点
+                //这个shift为true  or  false
+                // 新增点操作
+                //具体的参数详见：https://api.hcharts.cn/highcharts#Series.addPoint
+                newdatatime = point[0];
+                if (newdatatime != lastdatatime) {
+                    lastdatatime = newdatatime;
+                    chart.series[0].addPoint(point, true, shift);
+                    console.log(point[0]);
+                }
+
+
+                // 一秒后继续调用本函数
+                setTimeout(requestData, 1000);
+            },
+            cache: false
+        })
+    }
+    ;
+    function changecolor()
+    {
+        tempcolor='#' + ('00000' + (Math.random() * 0x1000000 << 0).toString(16)).substr(-6);
+        //chart.series.color='red';
+       // chart.series[0].color='red';
+        console.log(tempcolor);
+        chart.update({series:[{color:tempcolor}]})
+    };
+</script>
+<button onclick="changecolor()">change color</button>
+</body>
+</html>
